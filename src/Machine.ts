@@ -3,21 +3,18 @@ import { config } from './config';
 import { modelTimeToMs } from './timeConverter';
 import { getRandom } from './random';
 
-const shouldBreak = (timeWithoutBrek: number) => {
-    const probability = Math.random() * 0.5 + timeWithoutBrek * 0.5;
-    return probability > 0.85;
-};
-
 export class Machine extends EventEmitter {
     isBroken: boolean;
     onTheWay: boolean;
     spearTimeCost: number;
     reliability: number;
+    timeWithoutBreak: number;
     breakType: (typeof config.machine.breakTypes)[0] | null;
 
     constructor(public name: string) {
         super();
 
+        this.timeWithoutBreak = 0;
         this.breakType = null;
         this.onTheWay = false;
         this.isBroken = false;
@@ -57,7 +54,21 @@ export class Machine extends EventEmitter {
         const serviceTime = getRandom(this.breakType.serviceTime[0], this.breakType.serviceTime[1]);
         setTimeout(() => {
             this.emit('fix');
+            this.timeWithoutBreak = 0;
             this.isBroken = false;
         }, modelTimeToMs(serviceTime));
+    }
+
+    shouldBreak() {
+        const maxTime = 10000;
+        const probability = Math.random() * 0.5 + Math.min(this.timeWithoutBreak / maxTime, 1) * 0.5;
+        return probability > 0.85;
+    }
+
+    update() {
+        this.timeWithoutBreak++;
+        if (this.shouldBreak() && !this.isBroken) {
+            this.break();
+        }
     }
 }

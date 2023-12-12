@@ -38,6 +38,7 @@ const daySeconds = 8 * 60 * 60;
 let interval = setInterval(() => {
     time++;
     for (let machine of machines) {
+        // machine.update();
         if (machine.isBroken) {
             additionalCost += machine.spearTimeCost;
         }
